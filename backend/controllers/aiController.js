@@ -1,45 +1,43 @@
+const { generateQuiz, generateMixedQuiz } = require('../utils/quizGenerator');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 const getModel = () => genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // POST /api/ai/generate-questions
 const generateQuestions = async (req, res) => {
     try {
-        const { topic, count = 5, difficulty = 'medium' } = req.body;
-        if (!topic?.trim()) return res.status(400).json({ message: 'Topic is required' });
+        const {
+            topic, count = 5, difficulty = 'medium',
+            type = 'mcq', subject, targetClass, language, shuffle,
+        } = req.body;
 
-        const prompt = `Generate exactly ${count} multiple choice questions on the topic: "${topic}".
-Difficulty level: ${difficulty}.
+        if (!topic?.trim())
+            return res.status(400).json({ message: 'Topic is required' });
 
-Return ONLY a valid JSON array, no extra text, no markdown:
-[
-  {
-    "questionText": "Question here?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": 0,
-    "explanation": "Brief explanation.",
-    "difficulty": "${difficulty}"
-  }
-]
+        const result = await generateQuiz({
+            topic, count, difficulty, type,
+            subject, targetClass, language, shuffle,
+        });
 
-Rules:
-- correctAnswer is the index (0-3) of the correct option
-- All 4 options must be distinct and plausible
-- Return only the JSON array, nothing else`;
-
-        const model = getModel();
-        const result = await model.generateContent(prompt);
-        const raw = result.response.text().trim();
-
-        const jsonMatch = raw.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) return res.status(500).json({ message: 'AI returned invalid format' });
-
-        const questions = JSON.parse(jsonMatch[0]);
-        res.json({ questions, topic, generated: questions.length });
+        res.json(result);
     } catch (err) {
-        console.error('Gemini error:', err.message);
+        console.error('[generateQuestions]', err.message);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// POST /api/ai/generate-mixed — mixed difficulty quiz
+const generateMixed = async (req, res) => {
+    try {
+        const { topic, easyCount, mediumCount, hardCount, subject, targetClass } = req.body;
+        if (!topic?.trim())
+            return res.status(400).json({ message: 'Topic is required' });
+
+        const result = await generateMixedQuiz({ topic, easyCount, mediumCount, hardCount, subject, targetClass });
+        res.json(result);
+    } catch (err) {
+        console.error('[generateMixed]', err.message);
         res.status(500).json({ message: err.message });
     }
 };
@@ -48,14 +46,18 @@ Rules:
 const suggestSubject = async (req, res) => {
     try {
         const { title, category } = req.body;
-        const prompt = `Given a quiz titled "${title}" in category "${category}", suggest a specific subject name (2-4 words max). Return ONLY the subject name, nothing else.`;
+        // Return early if both empty — no need to call AI
+        if (!title?.trim() && !category?.trim())
+            return res.json({ subject: '' });
 
+        const prompt = `Given a quiz titled "${title || category}" in category "${category || title}", suggest a specific subject name (2-4 words max). Return ONLY the subject name, nothing else.`;
         const model = getModel();
         const result = await model.generateContent(prompt);
         const subject = result.response.text().trim().replace(/['"]/g, '');
         res.json({ subject });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        // Don't crash — just return empty subject
+        res.json({ subject: '' });
     }
 };
 
@@ -82,4 +84,4 @@ Give a short encouraging 2-3 sentence personalized feedback with specific improv
     }
 };
 
-module.exports = { generateQuestions, suggestSubject, analyzePerformance };
+module.exports = { generateQuestions, generateMixed, suggestSubject, analyzePerformance };

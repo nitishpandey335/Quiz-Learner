@@ -19,6 +19,9 @@ app.use('/api/quizzes', require('./routes/quizRoutes'));
 app.use('/api/attempts', require('./routes/attemptRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/notes', require('./routes/noteRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/coding', require('./routes/codingRoutes'));
+app.use('/api/timetable', require('./routes/timetableRoutes'));
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'Quiz Learner API running' }));

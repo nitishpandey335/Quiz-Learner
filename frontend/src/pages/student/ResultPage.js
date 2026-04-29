@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getAttemptById } from '../../utils/api';
 import Loader from '../../components/Loader';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const levelColors = { excellent: '#10b981', good: '#6366f1', average: '#f59e0b', poor: '#ef4444' };
 const levelEmoji = { excellent: '🏆', good: '👍', average: '📈', poor: '💪' };
@@ -21,6 +23,83 @@ const ResultPage = () => {
 
     const quiz = attempt.quizId;
     const color = levelColors[attempt.performanceLevel] || '#6366f1';
+
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+
+        // Header banner
+        doc.setFillColor(99, 102, 241);
+        doc.rect(0, 0, 210, 32, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Quiz Result Report', 14, 22);
+
+        // Score summary box
+        doc.setFillColor(245, 245, 255);
+        doc.rect(14, 38, 182, 40, 'F');
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Quiz: ${quiz?.title || 'N/A'}`, 18, 48);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.text(`Marks Obtained: ${attempt.correctAnswers} / ${attempt.totalQuestions}`, 18, 57);
+        doc.text(`Percentage: ${attempt.score}%`, 18, 65);
+        doc.text(`Performance: ${attempt.performanceLevel?.toUpperCase()}`, 100, 57);
+        doc.text(`Date: ${new Date(attempt.createdAt).toLocaleDateString()}`, 100, 65);
+        doc.text(`Time Taken: ${attempt.timeTaken ? Math.floor(attempt.timeTaken / 60) + 'm ' + attempt.timeTaken % 60 + 's' : '-'}`, 100, 73);
+        if (quiz?.targetClass) doc.text(`Class: ${quiz.targetClass}${quiz.section ? ' · Section ' + quiz.section : ''}`, 18, 73);
+
+        // Score bar
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('Score:', 18, 86);
+        doc.setFillColor(220, 220, 220);
+        doc.rect(18, 89, 140, 8, 'F');
+        const barColor = attempt.score >= 85 ? [16, 185, 129] : attempt.score >= 65 ? [99, 102, 241] : attempt.score >= 40 ? [245, 158, 11] : [239, 68, 68];
+        doc.setFillColor(...barColor);
+        doc.rect(18, 89, (140 * attempt.score) / 100, 8, 'F');
+        doc.setTextColor(60, 60, 60);
+        doc.text(`${attempt.score}%`, 162, 96);
+
+        // AI Feedback
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 60, 60);
+        doc.text('AI Feedback:', 14, 108);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        const feedbackLines = doc.splitTextToSize(attempt.aiFeedback || '', 180);
+        doc.text(feedbackLines, 14, 115);
+
+        // Question-wise table
+        if (quiz?.questions?.length) {
+            autoTable(doc, {
+                startY: 115 + feedbackLines.length * 5 + 8,
+                head: [['#', 'Question', 'Marks', 'Your Answer', 'Correct Answer', 'Result']],
+                body: quiz.questions.map((q, i) => [
+                    i + 1,
+                    q.questionText.substring(0, 55),
+                    attempt.answers[i] === q.correctAnswer ? '1/1' : '0/1',
+                    q.options[attempt.answers[i]] || 'Not Answered',
+                    q.options[q.correctAnswer],
+                    attempt.answers[i] === q.correctAnswer ? '✓ Correct' : '✗ Wrong',
+                ]),
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [99, 102, 241] },
+                alternateRowStyles: { fillColor: [245, 245, 255] },
+                columnStyles: { 5: { fontStyle: 'bold' } },
+                didParseCell: (data) => {
+                    if (data.column.index === 5 && data.section === 'body') {
+                        data.cell.styles.textColor = data.cell.raw?.includes('✓') ? [16, 185, 129] : [239, 68, 68];
+                    }
+                },
+            });
+        }
+
+        doc.save(`result-${quiz?.title || 'quiz'}-${Date.now()}.pdf`);
+    };
 
     return (
         <div style={styles.page}>
@@ -77,6 +156,7 @@ const ResultPage = () => {
             )}
 
             <div style={styles.actions}>
+                <button onClick={downloadPDF} style={{ ...styles.primaryBtn, background: '#10b981', cursor: 'pointer', border: 'none' }}>📥 Download PDF</button>
                 <Link to="/student/quizzes" style={styles.primaryBtn}>Browse More Quizzes</Link>
                 <Link to="/student" style={styles.outlineBtn}>Dashboard</Link>
                 <Link to="/student/analytics" style={styles.outlineBtn}>My Analytics</Link>

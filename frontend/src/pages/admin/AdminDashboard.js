@@ -10,7 +10,7 @@ const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
+    const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student', studentClass: '', section: '' });
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
@@ -26,7 +26,7 @@ const AdminDashboard = () => {
         try {
             await createUserByAdmin(form);
             toast.success(`${form.role.charAt(0).toUpperCase() + form.role.slice(1)} account created for ${form.name}!`);
-            setForm({ name: '', email: '', password: '', role: 'student' });
+            setForm({ name: '', email: '', password: '', role: 'student', studentClass: '', section: '' });
             setShowForm(false);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to create user');
@@ -93,6 +93,25 @@ const AdminDashboard = () => {
                                             <option value="admin">Admin</option>
                                         </select>
                                     </div>
+                                    {form.role === 'student' && (
+                                        <>
+                                            <div style={styles.field}>
+                                                <label style={styles.label}>Class</label>
+                                                <select style={styles.input} value={form.studentClass}
+                                                    onChange={(e) => setForm({ ...form, studentClass: e.target.value })}>
+                                                    <option value="">Select Class</option>
+                                                    {['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12',
+                                                        'College 1st Year', 'College 2nd Year', 'College 3rd Year', 'College 4th Year']
+                                                        .map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                            <div style={styles.field}>
+                                                <label style={styles.label}>Section</label>
+                                                <input style={styles.input} placeholder="e.g. A, B, Science" value={form.section}
+                                                    onChange={(e) => setForm({ ...form, section: e.target.value })} />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                                 <motion.button whileTap={{ scale: 0.97 }} type="submit" style={styles.submitBtn} disabled={creating}>
                                     {creating ? 'Creating...' : `✅ Create ${form.role.charAt(0).toUpperCase() + form.role.slice(1)} Account`}
@@ -116,6 +135,10 @@ const AdminDashboard = () => {
                     <Link to="/admin/analytics" style={styles.actionCard}>
                         <span style={styles.actionIcon}>📊</span>
                         <span>Platform Analytics</span>
+                    </Link>
+                    <Link to="/admin/timetable" style={styles.actionCard}>
+                        <span style={styles.actionIcon}>🗓️</span>
+                        <span>Timetable</span>
                     </Link>
                 </div>
             </motion.div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { getQuizById, submitAttempt } from '../../utils/api';
+import { getQuizById, submitAttempt, markAttendance, getMyAttendance } from '../../utils/api';
 import Loader from '../../components/Loader';
 
 const AttemptQuiz = () => {
@@ -15,14 +15,63 @@ const AttemptQuiz = () => {
     const [startTime] = useState(Date.now());
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [scheduledAt, setScheduledAt] = useState(null);
+    const [countdown, setCountdown] = useState(null);
+
+    // Attendance
+    const [showAttendance, setShowAttendance] = useState(false);
+    const [attendanceMarked, setAttendanceMarked] = useState(false);
+    const [markingAttendance, setMarkingAttendance] = useState(false);
 
     useEffect(() => {
-        getQuizById(id).then(({ data }) => {
-            setQuiz(data);
-            setAnswers(new Array(data.questions.length).fill(-1));
-            setTimeLeft(data.duration * 60);
-        }).finally(() => setLoading(false));
+        getQuizById(id)
+            .then(({ data }) => {
+                const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
+                setQuiz({ ...data, questions: shuffled });
+                setAnswers(new Array(shuffled.length).fill(-1));
+                setTimeLeft(data.duration * 60);
+                if (data.attendanceEnabled) {
+                    getMyAttendance(id).then(({ data: att }) => {
+                        if (att) setAttendanceMarked(true);
+                        else setShowAttendance(true);
+                    }).catch(() => setShowAttendance(true));
+                }
+            })
+            .catch((err) => {
+                if (err.response?.status === 403 && err.response?.data?.scheduledAt) {
+                    setScheduledAt(new Date(err.response.data.scheduledAt));
+                } else {
+                    toast.error(err.response?.data?.message || 'Failed to load quiz');
+                }
+            })
+            .finally(() => setLoading(false));
     }, [id]);
+
+    // Countdown for scheduled quiz
+    useEffect(() => {
+        if (!scheduledAt) return;
+        const tick = setInterval(() => {
+            const diff = scheduledAt - new Date();
+            if (diff <= 0) { clearInterval(tick); window.location.reload(); return; }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setCountdown(`${h > 0 ? h + 'h ' : ''}${m}m ${s}s`);
+        }, 1000);
+        return () => clearInterval(tick);
+    }, [scheduledAt]);
+
+    const handleMarkAttendance = async () => {
+        setMarkingAttendance(true);
+        try {
+            await markAttendance({ quizId: id });
+            setAttendanceMarked(true);
+            setShowAttendance(false);
+            toast.success('Attendance marked!');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed');
+        } finally { setMarkingAttendance(false); }
+    };
 
     const handleSubmit = useCallback(async () => {
         if (submitting) return;
@@ -50,7 +99,29 @@ const AttemptQuiz = () => {
     }, [quiz, handleSubmit, timeLeft]);
 
     if (loading) return <Loader />;
-    if (!quiz) return <p>Quiz not found</p>;
+
+    // Scheduled quiz — not started yet
+    if (scheduledAt) {
+        return (
+            <div style={styles.page}>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={styles.schedCard}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏰</div>
+                    <h2 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Quiz Not Started Yet</h2>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                        Scheduled for: {scheduledAt.toLocaleString()}
+                    </p>
+                    {countdown && (
+                        <div style={styles.countdownBox}>
+                            Starts in: <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{countdown}</span>
+                        </div>
+                    )}
+                    <button onClick={() => navigate(-1)} style={styles.backBtn}>← Go Back</button>
+                </motion.div>
+            </div>
+        );
+    }
+
+    if (!quiz) return <p style={{ padding: '2rem' }}>Quiz not found</p>;
 
     const q = quiz.questions[current];
     const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
@@ -59,11 +130,36 @@ const AttemptQuiz = () => {
 
     return (
         <div style={styles.page}>
+            {/* Attendance Modal */}
+            <AnimatePresence>
+                {showAttendance && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.modalOverlay}>
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} style={styles.modal}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
+                            <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Mark Your Attendance</h3>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                                Please mark your attendance before starting the quiz.
+                            </p>
+                            <motion.button whileTap={{ scale: 0.97 }} onClick={handleMarkAttendance}
+                                disabled={markingAttendance} style={styles.attendBtn}>
+                                {markingAttendance ? 'Marking...' : '✅ Mark Present'}
+                            </motion.button>
+                            <button onClick={() => setShowAttendance(false)} style={styles.skipBtn}>
+                                Skip for now
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div style={styles.header}>
                 <div>
                     <h2 style={styles.quizTitle}>{quiz.title}</h2>
-                    <p style={styles.meta}>{quiz.category} · {quiz.questions.length} questions</p>
+                    <p style={styles.meta}>
+                        {quiz.category} · {quiz.questions.length} questions
+                        {attendanceMarked && <span style={styles.attBadge}>✅ Present</span>}
+                    </p>
                 </div>
                 <div style={{ ...styles.timer, color: timeLeft < 60 ? '#ef4444' : 'var(--primary)' }}>
                     ⏱ {mins}:{secs}
@@ -83,21 +179,9 @@ const AttemptQuiz = () => {
                     <h3 style={styles.questionText}>{q.questionText}</h3>
                     <div style={styles.options}>
                         {q.options.map((opt, oi) => (
-                            <motion.button
-                                key={oi}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                    const updated = [...answers];
-                                    updated[current] = oi;
-                                    setAnswers(updated);
-                                }}
-                                style={{
-                                    ...styles.option,
-                                    background: answers[current] === oi ? 'var(--primary)' : 'var(--bg)',
-                                    color: answers[current] === oi ? '#fff' : 'var(--text)',
-                                    borderColor: answers[current] === oi ? 'var(--primary)' : 'var(--border)',
-                                }}
-                            >
+                            <motion.button key={oi} whileTap={{ scale: 0.98 }}
+                                onClick={() => { const u = [...answers]; u[current] = oi; setAnswers(u); }}
+                                style={{ ...styles.option, background: answers[current] === oi ? 'var(--primary)' : 'var(--bg)', color: answers[current] === oi ? '#fff' : 'var(--text)', borderColor: answers[current] === oi ? 'var(--primary)' : 'var(--border)' }}>
                                 <span style={styles.optLabel}>{String.fromCharCode(65 + oi)}</span>
                                 {opt}
                             </motion.button>
@@ -128,6 +212,14 @@ const AttemptQuiz = () => {
 
 const styles = {
     page: { padding: '2rem 3rem', maxWidth: 800, margin: '0 auto' },
+    schedCard: { background: 'var(--card)', borderRadius: '24px', padding: '3rem', textAlign: 'center', border: '1px solid var(--border)', maxWidth: 480, margin: '4rem auto' },
+    countdownBox: { background: 'var(--bg)', borderRadius: '12px', padding: '1rem 2rem', fontSize: '1.2rem', marginBottom: '1.5rem', border: '1px solid var(--border)' },
+    backBtn: { background: 'var(--primary)', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' },
+    modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+    modal: { background: 'var(--card)', borderRadius: '20px', padding: '2.5rem', textAlign: 'center', maxWidth: 380, width: '90%', border: '1px solid var(--border)' },
+    attendBtn: { background: 'var(--primary)', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '12px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', width: '100%', marginBottom: '0.8rem' },
+    skipBtn: { background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem' },
+    attBadge: { background: '#10b98120', color: '#10b981', padding: '0.1rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, marginLeft: '0.5rem' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' },
     quizTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)' },
     meta: { color: 'var(--text-muted)', fontSize: '0.9rem' },

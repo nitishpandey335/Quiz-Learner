@@ -11,8 +11,9 @@ const userSchema = new mongoose.Schema(
         isActive: { type: Boolean, default: true },
         otp: { type: String },
         otpExpiry: { type: Date },
-        studentClass: { type: String, default: '' }, // e.g. "Class 10", "Class 12", "College 1st Year"
-        collegeCourse: { type: String, default: '' }, // e.g. "B.Tech", "BCA", "MBA"
+        studentClass: { type: String, default: '' },
+        collegeCourse: { type: String, default: '' },
+        section: { type: String, default: '' },
     },
     { timestamps: true }
 );

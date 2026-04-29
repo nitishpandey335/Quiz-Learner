@@ -4,6 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { getQuizAnalytics } from '../../utils/api';
 import StatCard from '../../components/StatCard';
 import Loader from '../../components/Loader';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const QuizAnalytics = () => {
     const { id } = useParams();
@@ -21,9 +23,42 @@ const QuizAnalytics = () => {
         score: a.score,
     })) || [];
 
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Quiz Result Report', 14, 20);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Total Attempts: ${data?.totalAttempts || 0}   |   Average Score: ${data?.avgScore || 0}%`, 14, 30);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 37);
+
+        autoTable(doc, {
+            startY: 45,
+            head: [['#', 'Student', 'Email', 'Score', 'Correct', 'Performance', 'Time Taken', 'Date']],
+            body: data?.attempts?.map((a, i) => [
+                i + 1,
+                a.studentId?.name || 'N/A',
+                a.studentId?.email || 'N/A',
+                `${a.score}%`,
+                `${a.correctAnswers}/${a.totalQuestions}`,
+                a.performanceLevel,
+                a.timeTaken ? `${Math.floor(a.timeTaken / 60)}m ${a.timeTaken % 60}s` : '-',
+                new Date(a.createdAt).toLocaleDateString(),
+            ]) || [],
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [99, 102, 241] },
+            alternateRowStyles: { fillColor: [245, 245, 255] },
+        });
+
+        doc.save(`quiz-results-${Date.now()}.pdf`);
+    };
+
     return (
         <div style={styles.page}>
-            <h1 style={styles.title}>Quiz Analytics</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <h1 style={styles.title}>Quiz Analytics</h1>
+                <button onClick={downloadPDF} style={styles.pdfBtn}>📥 Download PDF Report</button>
+            </div>
             <div style={styles.grid}>
                 <StatCard icon="🏆" label="Total Attempts" value={data?.totalAttempts || 0} color="#6366f1" />
                 <StatCard icon="📊" label="Average Score" value={`${data?.avgScore || 0}%`} color="#10b981" />
@@ -62,7 +97,8 @@ const QuizAnalytics = () => {
 
 const styles = {
     page: { padding: '2rem 3rem', maxWidth: 1100, margin: '0 auto' },
-    title: { fontSize: '2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '2rem' },
+    title: { fontSize: '2rem', fontWeight: 700, color: 'var(--text)' },
+    pdfBtn: { background: '#10b981', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' },
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', marginBottom: '2rem' },
     chartCard: { background: 'var(--card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', marginBottom: '2rem' },
     chartTitle: { fontWeight: 600, marginBottom: '1rem', color: 'var(--text)' },

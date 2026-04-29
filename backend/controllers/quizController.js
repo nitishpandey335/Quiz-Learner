@@ -14,17 +14,30 @@ const createQuiz = async (req, res) => {
 // GET /api/quizzes  (published, for students)
 const getPublishedQuizzes = async (req, res) => {
     try {
-        const { category, difficulty } = req.query;
+        const { category, difficulty, subject, search, quizType } = req.query;
         const filter = { isPublished: true };
-        if (category) filter.category = category;
+        if (category) filter.category = new RegExp(category, 'i');
         if (difficulty) filter.difficulty = difficulty;
+        if (subject) filter.subject = new RegExp(subject, 'i');
+        if (quizType) filter.quizType = quizType;
+        if (search) {
+            filter.$or = [
+                { title: new RegExp(search, 'i') },
+                { subject: new RegExp(search, 'i') },
+                { category: new RegExp(search, 'i') },
+                { description: new RegExp(search, 'i') },
+            ];
+        }
         const quizzes = await Quiz.find(filter)
             .populate('teacherId', 'name')
-            .select('title category difficulty duration totalAttempts description teacherId createdAt questions')
+            .select('title category subject difficulty duration totalAttempts description teacherId createdAt questions quizType startTime expiryTime targetClass section')
             .sort({ createdAt: -1 })
             .lean();
-        // Send only question count, not full question data
-        const result = quizzes.map(q => ({ ...q, questionCount: q.questions?.length || 0, questions: undefined }));
+        const result = quizzes.map(q => ({
+            ...q,
+            questionCount: q.questions?.length || 0,
+            questions: undefined,
+        }));
         res.json(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -59,6 +72,15 @@ const getQuizById = async (req, res) => {
     try {
         const quiz = await Quiz.findById(req.params.id).populate('teacherId', 'name');
         if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+
+        // Scheduling check for students
+        if (req.user.role === 'student') {
+            const now = new Date();
+            if (quiz.quizType === 'scheduled' && quiz.startTime && now < new Date(quiz.startTime))
+                return res.status(403).json({ message: 'Quiz has not started yet', startTime: quiz.startTime });
+            if (quiz.expiryTime && now > new Date(quiz.expiryTime))
+                return res.status(403).json({ message: 'Quiz has expired', expiryTime: quiz.expiryTime });
+        }
         res.json(quiz);
     } catch (err) {
         res.status(500).json({ message: err.message });

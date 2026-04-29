@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getMyAttempts, getPublishedQuizzes } from '../../utils/api';
+import { getMyAttempts, getPublishedQuizzes, getMyCodingAttempts } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../../components/StatCard';
 
@@ -14,21 +14,26 @@ const StudentDashboard = () => {
     const { user } = useAuth();
     const [attempts, setAttempts] = useState([]);
     const [quizCount, setQuizCount] = useState(0);
+    const [codingAttempts, setCodingAttempts] = useState([]);
     const [attemptsLoaded, setAttemptsLoaded] = useState(false);
     const [quizzesLoaded, setQuizzesLoaded] = useState(false);
+    const [codingLoaded, setCodingLoaded] = useState(false);
 
     useEffect(() => {
-        // Load attempts first (most important for dashboard)
         getMyAttempts()
             .then(({ data }) => setAttempts(data))
             .catch(() => { })
             .finally(() => setAttemptsLoaded(true));
 
-        // Load quiz count independently — doesn't block render
         getPublishedQuizzes()
             .then(({ data }) => setQuizCount(data.length))
             .catch(() => { })
             .finally(() => setQuizzesLoaded(true));
+
+        getMyCodingAttempts()
+            .then(({ data }) => setCodingAttempts(data))
+            .catch(() => { })
+            .finally(() => setCodingLoaded(true));
     }, []);
 
     const avgScore = attempts.length
@@ -72,6 +77,7 @@ const StudentDashboard = () => {
                 <div style={styles.actions}>
                     <Link to="/student/quizzes" style={styles.primaryBtn}>Browse Quizzes</Link>
                     <Link to="/student/notes" style={styles.primaryBtn}>📚 My Notes</Link>
+                    <Link to="/student/coding" style={styles.primaryBtn}>💻 Coding</Link>
                     <Link to="/student/analytics" style={styles.outlineBtn}>My Analytics</Link>
                 </div>
 
@@ -101,6 +107,45 @@ const StudentDashboard = () => {
                                         {a.score}%
                                     </span>
                                     <Link to={`/student/result/${a._id}`} style={styles.link}>View →</Link>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
+                </div>
+
+                {/* Coding Attempts */}
+                <h2 style={{ ...styles.sectionTitle, marginTop: '2rem' }}>💻 Recent Coding Submissions</h2>
+                <div style={styles.attemptList}>
+                    {!codingLoaded ? (
+                        [1, 2].map((i) => (
+                            <div key={i} style={{ ...styles.attemptItem, gap: '1rem' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <Skeleton w="50%" h={16} r={4} />
+                                    <Skeleton w="30%" h={12} r={4} />
+                                </div>
+                                <Skeleton w={80} h={32} r={20} />
+                            </div>
+                        ))
+                    ) : codingAttempts.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)' }}>No coding submissions yet. <Link to="/student/coding" style={{ color: 'var(--primary)', fontWeight: 600 }}>Try a challenge →</Link></p>
+                    ) : (
+                        codingAttempts.slice(0, 5).map((a) => (
+                            <motion.div key={a._id} whileHover={{ x: 4 }} style={styles.attemptItem}>
+                                <div>
+                                    <div style={styles.quizName}>{a.challengeId?.title || 'Challenge'}</div>
+                                    <div style={styles.quizMeta}>
+                                        {a.language} · {a.challengeId?.difficulty} · {new Date(a.createdAt).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <div style={styles.right}>
+                                    <span style={{
+                                        ...styles.scoreBadge,
+                                        background: a.status === 'passed' ? '#10b98120' : a.status === 'partial' ? '#f59e0b20' : '#ef444420',
+                                        color: a.status === 'passed' ? '#10b981' : a.status === 'partial' ? '#f59e0b' : '#ef4444'
+                                    }}>
+                                        {a.status === 'passed' ? '✅ Accepted' : a.status === 'partial' ? `⚠️ ${a.testsPassed}/${a.totalTests}` : '❌ Failed'}
+                                    </span>
+                                    <Link to={`/student/coding/${a.challengeId?._id}`} style={styles.link}>Retry →</Link>
                                 </div>
                             </motion.div>
                         ))

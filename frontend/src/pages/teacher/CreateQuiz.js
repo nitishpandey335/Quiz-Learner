@@ -9,11 +9,20 @@ const emptyQuestion = () => ({
     correctAnswer: 0, explanation: '', difficulty: 'medium',
 });
 
+const CLASS_OPTIONS = [
+    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
+    'Class 11', 'Class 12',
+    'College 1st Year', 'College 2nd Year', 'College 3rd Year', 'College 4th Year',
+];
+
 const CreateQuiz = () => {
     const navigate = useNavigate();
     const [quiz, setQuiz] = useState({
         title: '', description: '', category: '', subject: '',
         duration: 30, difficulty: 'medium', isPublished: false,
+        targetClass: '', section: '',
+        quizType: 'dpp', startTime: '', expiryTime: '',
+        attendanceEnabled: false,
     });
     const [questions, setQuestions] = useState([emptyQuestion()]);
     const [loading, setLoading] = useState(false);
@@ -103,11 +112,56 @@ const CreateQuiz = () => {
                             <option value="medium">Medium</option>
                             <option value="hard">Hard</option>
                         </select>
+                        <select style={s.input} value={quiz.targetClass} onChange={(e) => setQuiz({ ...quiz, targetClass: e.target.value })}>
+                            <option value="">Target Class (optional)</option>
+                            {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <input style={s.input} placeholder="Section (optional, e.g. A, B, Science)" value={quiz.section}
+                            onChange={(e) => setQuiz({ ...quiz, section: e.target.value })} />
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)' }}>
                             <input type="checkbox" checked={quiz.isPublished}
                                 onChange={(e) => setQuiz({ ...quiz, isPublished: e.target.checked })} />
                             Publish immediately
                         </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)' }}>
+                            <input type="checkbox" checked={quiz.attendanceEnabled}
+                                onChange={(e) => setQuiz({ ...quiz, attendanceEnabled: e.target.checked })} />
+                            Enable Attendance
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)' }}>
+                            <input type="checkbox" checked={quiz.attendanceEnabled}
+                                onChange={(e) => setQuiz({ ...quiz, attendanceEnabled: e.target.checked })} />
+                            Enable Attendance
+                        </label>
+                    </div>
+
+                    {/* Quiz Type & Scheduling */}
+                    <div style={{ marginTop: '1rem', padding: '1.2rem', background: 'var(--bg)', borderRadius: '12px', border: '1.5px solid var(--border)' }}>
+                        <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.8rem' }}>📅 Quiz Type & Schedule</p>
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                            {[{ val: 'dpp', label: '📝 DPP (Daily Practice)' }, { val: 'scheduled', label: '🗓️ Scheduled Test' }].map(opt => (
+                                <label key={opt.val} onClick={() => setQuiz({ ...quiz, quizType: opt.val, startTime: '', expiryTime: '' })}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)', cursor: 'pointer', padding: '0.6rem 1.2rem', borderRadius: '10px', border: `2px solid ${quiz.quizType === opt.val ? 'var(--primary)' : 'var(--border)'}`, background: quiz.quizType === opt.val ? '#6366f115' : 'transparent', fontWeight: quiz.quizType === opt.val ? 700 : 400 }}>
+                                    {opt.label}
+                                </label>
+                            ))}
+                        </div>
+                        <div style={s.grid}>
+                            {quiz.quizType === 'scheduled' && (
+                                <div>
+                                    <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Start Date & Time *</label>
+                                    <input style={s.input} type="datetime-local" value={quiz.startTime}
+                                        onChange={(e) => setQuiz({ ...quiz, startTime: e.target.value })} />
+                                </div>
+                            )}
+                            <div>
+                                <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+                                    {quiz.quizType === 'dpp' ? 'Expiry Date & Time (optional)' : 'Expiry Date & Time *'}
+                                </label>
+                                <input style={s.input} type="datetime-local" value={quiz.expiryTime}
+                                    onChange={(e) => setQuiz({ ...quiz, expiryTime: e.target.value })} />
+                            </div>
+                        </div>
                     </div>
                     <textarea style={{ ...s.input, borderRadius: '12px', minHeight: 70, resize: 'vertical' }}
                         placeholder="Description" value={quiz.description}

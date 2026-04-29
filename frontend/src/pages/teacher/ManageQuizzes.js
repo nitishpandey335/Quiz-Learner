@@ -49,7 +49,7 @@ const ManageQuizzes = () => {
                             <span style={{ ...styles.pubBadge, background: q.isPublished ? '#10b98120' : '#94a3b820', color: q.isPublished ? '#10b981' : '#94a3b8' }}>{q.isPublished ? '✅ Published' : '📝 Draft'}</span>
                         </div>
                         <h3 style={styles.quizTitle}>{q.title}</h3>
-                        <p style={styles.quizMeta}>{q.category} · {q.questions.length} questions · {q.duration} min</p>
+                        <p style={styles.quizMeta}>{q.category} · {(q.questions || []).length} questions · {q.duration} min</p>
                         <p style={styles.attempts}>🏆 {q.totalAttempts} attempts</p>
                         <div style={styles.cardBtns}>
                             <button onClick={() => togglePublish(q)} style={styles.btn}>{q.isPublished ? 'Unpublish' : 'Publish'}</button>

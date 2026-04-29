@@ -119,6 +119,7 @@ const uploadPDF = async (req, res) => {
             title,
             subject,
             targetClass,
+            section: req.body.section || '',
             teacherId: req.user._id,
             content: '',
             pdfUrl,

@@ -14,12 +14,23 @@ const quizSchema = new mongoose.Schema(
         description: { type: String, default: '' },
         category: { type: String, required: true },
         subject: { type: String, default: '' },
+        targetClass: { type: String, default: '' },
+        section: { type: String, default: '' },
         teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         questions: [questionSchema],
         duration: { type: Number, default: 30 }, // minutes
         difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' },
         isPublished: { type: Boolean, default: false },
         totalAttempts: { type: Number, default: 0 },
+        // Quiz Type
+        quizType: { type: String, enum: ['dpp', 'scheduled'], default: 'dpp' },
+        // Scheduling
+        startTime: { type: Date, default: null },
+        expiryTime: { type: Date, default: null },
+        scheduledAt: { type: Date, default: null },
+        schedulingEnabled: { type: Boolean, default: false },
+        // Attendance
+        attendanceEnabled: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

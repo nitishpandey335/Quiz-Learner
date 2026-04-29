@@ -14,8 +14,34 @@ const Navbar = () => {
         navigate('/login');
     };
 
-    const dashboardPath =
-        user?.role === 'admin' ? '/admin' : user?.role === 'teacher' ? '/teacher' : '/student';
+    const navLinks = {
+        admin: [
+            { to: '/admin', label: 'Dashboard' },
+            { to: '/admin/users', label: 'Users' },
+            { to: '/admin/analytics', label: 'Analytics' },
+            { to: '/admin/timetable', label: '🗓️ Timetable' },
+        ],
+        teacher: [
+            { to: '/teacher', label: 'Dashboard' },
+            { to: '/teacher/quizzes', label: 'Quizzes' },
+            { to: '/teacher/practice', label: '🎯 Practice' },
+            { to: '/teacher/notes', label: 'Notes' },
+            { to: '/teacher/coding', label: '💻 Coding' },
+            { to: '/teacher/attendance', label: '📋 Attendance' },
+            { to: '/teacher/section-results', label: '📊 Results' },
+        ],
+        student: [
+            { to: '/student', label: 'Dashboard' },
+            { to: '/student/practice', label: '🎯 Practice' },
+            { to: '/student/quizzes', label: 'Quizzes' },
+            { to: '/student/notes', label: 'Notes' },
+            { to: '/student/coding', label: '💻 Coding' },
+            { to: '/student/attendance', label: '📋 Attendance' },
+            { to: '/student/analytics', label: 'Analytics' },
+        ],
+    };
+
+    const links = user ? (navLinks[user.role] || []) : [];
 
     return (
         <motion.nav
@@ -32,7 +58,9 @@ const Navbar = () => {
                 </button>
                 {user ? (
                     <>
-                        <Link to={dashboardPath} style={styles.link}>Dashboard</Link>
+                        {links.map(l => (
+                            <Link key={l.to} to={l.to} style={styles.link}>{l.label}</Link>
+                        ))}
                         <span style={styles.badge}>{user.role}</span>
                         <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
                     </>

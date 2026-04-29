@@ -104,4 +104,61 @@ const getAttemptById = async (req, res) => {
     }
 };
 
-module.exports = { submitAttempt, getMyAttempts, getMyAnalytics, getAttemptById };
+// GET /api/attempts/section?targetClass=&section=&quizId= — admin/teacher
+const getResultsBySection = async (req, res) => {
+    try {
+        const { targetClass, section, quizId } = req.query;
+        const User = require('../models/User');
+
+        let attempts = [];
+
+        if (targetClass?.trim() || section?.trim()) {
+            // Try to find students with matching class/section
+            const studentFilter = { role: 'student' };
+            if (targetClass?.trim()) studentFilter.studentClass = new RegExp(`^${targetClass.trim()}$`, 'i');
+            if (section?.trim()) studentFilter.section = new RegExp(`^${section.trim()}$`, 'i');
+
+            const students = await User.find(studentFilter).select('_id name email studentClass section');
+
+            if (students.length > 0) {
+                const studentIds = students.map(s => s._id);
+                const attemptFilter = { studentId: { $in: studentIds } };
+                if (quizId?.trim()) attemptFilter.quizId = quizId.trim();
+
+                attempts = await Attempt.find(attemptFilter)
+                    .populate('studentId', 'name email studentClass section')
+                    .populate('quizId', 'title category section targetClass')
+                    .sort({ createdAt: -1 });
+            } else {
+                // No students found with that class/section — fallback: get ALL attempts and filter by populated data
+                const allAttempts = await Attempt.find(quizId?.trim() ? { quizId: quizId.trim() } : {})
+                    .populate('studentId', 'name email studentClass section')
+                    .populate('quizId', 'title category section targetClass')
+                    .sort({ createdAt: -1 });
+
+                // Filter in JS (handles empty/null fields too)
+                attempts = allAttempts.filter(a => {
+                    const sc = (a.studentId?.studentClass || '').toLowerCase().trim();
+                    const sec = (a.studentId?.section || '').toLowerCase().trim();
+                    const tcMatch = !targetClass?.trim() || sc === targetClass.trim().toLowerCase();
+                    const secMatch = !section?.trim() || sec === section.trim().toLowerCase();
+                    return tcMatch && secMatch;
+                });
+            }
+        } else {
+            // No filter — return all attempts
+            const attemptFilter = {};
+            if (quizId?.trim()) attemptFilter.quizId = quizId.trim();
+            attempts = await Attempt.find(attemptFilter)
+                .populate('studentId', 'name email studentClass section')
+                .populate('quizId', 'title category section targetClass')
+                .sort({ createdAt: -1 });
+        }
+
+        res.json(attempts);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { submitAttempt, getMyAttempts, getMyAnalytics, getAttemptById, getResultsBySection };

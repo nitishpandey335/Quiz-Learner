@@ -13,12 +13,12 @@ const CLASS_OPTIONS = [
 const CreateNote = () => {
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [form, setForm] = useState({ title: '', content: '', subject: '', targetClass: '', tags: '' });
+    const [form, setForm] = useState({ title: '', content: '', subject: '', targetClass: '', section: '', tags: '' });
     const [saving, setSaving] = useState(false);
-    const [aiForm, setAiForm] = useState({ subject: '', topic: '', targetClass: '' });
+    const [aiForm, setAiForm] = useState({ subject: '', topic: '', targetClass: '', section: '' });
     const [aiLoading, setAiLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [pdfForm, setPdfForm] = useState({ title: '', subject: '', targetClass: '', tags: '' });
+    const [pdfForm, setPdfForm] = useState({ title: '', subject: '', targetClass: '', section: '', tags: '' });
     const [pdfFile, setPdfFile] = useState(null);
     const [pdfUploading, setPdfUploading] = useState(false);
     const [showPdfForm, setShowPdfForm] = useState(false);
@@ -40,6 +40,7 @@ const CreateNote = () => {
                 content: data.content,
                 subject: aiForm.subject,
                 targetClass: aiForm.targetClass,
+                section: aiForm.section,
                 title: aiForm.topic,
             }));
             setShowForm(true);
@@ -58,7 +59,7 @@ const CreateNote = () => {
             const tags = form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
             await createNote({ ...form, tags });
             toast.success('Note created successfully!');
-            setForm({ title: '', content: '', subject: '', targetClass: '', tags: '' });
+            setForm({ title: '', content: '', subject: '', targetClass: '', section: '', tags: '' });
             setShowForm(false);
             fetchNotes();
         } catch (err) {
@@ -87,10 +88,11 @@ const CreateNote = () => {
             formData.append('title', pdfForm.title);
             formData.append('subject', pdfForm.subject);
             formData.append('targetClass', pdfForm.targetClass);
+            formData.append('section', pdfForm.section);
             formData.append('tags', pdfForm.tags);
             await uploadPDFNote(formData);
             toast.success('PDF uploaded successfully!');
-            setPdfForm({ title: '', subject: '', targetClass: '', tags: '' });
+            setPdfForm({ title: '', subject: '', targetClass: '', section: '', tags: '' });
             setPdfFile(null);
             setShowPdfForm(false);
             fetchNotes();
@@ -124,6 +126,8 @@ const CreateNote = () => {
                         <option value="">Select class</option>
                         {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    <input style={styles.input} placeholder="Section (optional, e.g. A, B)" value={aiForm.section}
+                        onChange={(e) => setAiForm({ ...aiForm, section: e.target.value })} />
                     <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={handleAIGenerate}
                         style={styles.aiBtn} disabled={aiLoading}>
                         {aiLoading ? '⏳ Generating...' : '✨ Generate Notes'}
@@ -153,6 +157,8 @@ const CreateNote = () => {
                                 <option value="">Target Class *</option>
                                 {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
+                            <input style={styles.input} placeholder="Section (optional, e.g. A, B, Science)" value={pdfForm.section}
+                                onChange={(e) => setPdfForm({ ...pdfForm, section: e.target.value })} />
                             <input style={styles.input} placeholder="Tags (comma separated)" value={pdfForm.tags}
                                 onChange={(e) => setPdfForm({ ...pdfForm, tags: e.target.value })} />
                         </div>
@@ -185,6 +191,8 @@ const CreateNote = () => {
                                 <option value="">Target Class *</option>
                                 {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
+                            <input style={styles.input} placeholder="Section (optional, e.g. A, B, Science)" value={form.section}
+                                onChange={(e) => setForm({ ...form, section: e.target.value })} />
                             <input style={styles.input} placeholder="Tags (comma separated, optional)" value={form.tags}
                                 onChange={(e) => setForm({ ...form, tags: e.target.value })} />
                         </div>
@@ -211,6 +219,7 @@ const CreateNote = () => {
                             <div style={styles.noteTitle}>{note.title}</div>
                             <div style={styles.noteMeta}>
                                 <span style={styles.classBadge}>{note.targetClass}</span>
+                                {note.section && <span style={styles.sectionBadge}>§ {note.section}</span>}
                                 <span style={styles.subjectBadge}>{note.subject}</span>
                                 {note.pdfUrl && <span style={{ background: '#ef444420', color: '#ef4444', padding: '0.2rem 0.7rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>📄 PDF</span>}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -252,6 +261,7 @@ const styles = {
     noteMeta: { display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' },
     classBadge: { background: '#6366f120', color: 'var(--primary)', padding: '0.2rem 0.7rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 },
     subjectBadge: { background: '#10b98120', color: '#10b981', padding: '0.2rem 0.7rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 },
+    sectionBadge: { background: '#f59e0b20', color: '#f59e0b', padding: '0.2rem 0.7rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 },
     deleteBtn: { background: '#ef444420', color: '#ef4444', border: 'none', padding: '0.4rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 },
     pdfCard: { background: 'linear-gradient(135deg,#10b98110,#06b6d410)', border: '2px solid #10b981', borderRadius: '16px', padding: '1.8rem', marginBottom: '1.5rem' },
     fileInputWrap: { marginBottom: '1rem' },

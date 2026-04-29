@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getTeacherQuizzes, getAllQuizzes } from '../../utils/api';
+import { getTeacherQuizzes, getAllQuizzes, getTimetable } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../../components/StatCard';
 
@@ -12,6 +12,7 @@ const Skeleton = ({ w = '100%', h = 20, r = 8 }) => (
 const TeacherDashboard = () => {
     const { user } = useAuth();
     const [quizzes, setQuizzes] = useState([]);
+    const [timetable, setTimetable] = useState([]);
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -20,6 +21,9 @@ const TeacherDashboard = () => {
             .then(({ data }) => setQuizzes(data))
             .catch(() => { })
             .finally(() => setLoaded(true));
+        getTimetable()
+            .then(({ data }) => setTimetable(data))
+            .catch(() => { });
     }, [user]);
 
     const published = quizzes.filter((q) => q.isPublished).length;
@@ -58,7 +62,29 @@ const TeacherDashboard = () => {
                     <Link to="/teacher/create-quiz" style={styles.primaryBtn}>+ Create New Quiz</Link>
                     <Link to="/teacher/quizzes" style={styles.outlineBtn}>Manage Quizzes</Link>
                     <Link to="/teacher/notes" style={styles.outlineBtn}>📝 Manage Notes</Link>
+                    <Link to="/teacher/section-results" style={styles.outlineBtn}>📊 Section Results</Link>
                 </div>
+
+                {/* My Timetable */}
+                {timetable.length > 0 && (
+                    <>
+                        <h2 style={styles.sectionTitle}>🗓️ My Timetable</h2>
+                        <div style={styles.quizList}>
+                            {timetable.map(t => (
+                                <motion.div key={t._id} whileHover={{ x: 4 }} style={styles.quizItem}>
+                                    <div>
+                                        <div style={styles.quizTitle}>{t.subject}</div>
+                                        <div style={styles.quizMeta}>{t.targetClass} · Section {t.section} · {t.day}</div>
+                                    </div>
+                                    <div style={styles.quizRight}>
+                                        <span style={{ ...styles.badge, background: '#6366f120', color: 'var(--primary)' }}>{t.startTime} – {t.endTime}</span>
+                                        {t.room && <span style={{ ...styles.badge, background: '#f59e0b20', color: '#f59e0b' }}>🚪 {t.room}</span>}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </>
+                )}
 
                 <h2 style={styles.sectionTitle}>Recent Quizzes</h2>
                 <div style={styles.quizList}>
