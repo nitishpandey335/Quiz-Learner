@@ -78,11 +78,11 @@ const BrowseQuizzes = () => {
 };
 
 const styles = {
-    page: { padding: '2rem 3rem', maxWidth: 1200, margin: '0 auto' },
-    title: { fontSize: '2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1.5rem' },
-    filters: { display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' },
-    select: { padding: '0.7rem 1rem', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: '0.9rem' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' },
+    page: { padding: '1rem', maxWidth: 1200, margin: '0 auto' },
+    title: { fontSize: '1.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1.5rem' },
+    filters: { display: 'flex', gap: '0.8rem', marginBottom: '1.5rem', flexWrap: 'wrap' },
+    select: { padding: '0.7rem 1rem', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: '0.9rem', flex: '1 1 140px' },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.2rem' },
     card: { background: 'var(--card)', borderRadius: '20px', padding: '1.8rem', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' },
     cardTop: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' },
     category: { background: 'var(--primary)', color: '#fff', padding: '0.2rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 },

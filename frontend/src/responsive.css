@@ -1,0 +1,180 @@
+/* ─── Quiz Learner — Mobile Responsive Overrides ─────────────────────────── */
+
+/* ── Page padding fix for all pages ── */
+@media (max-width: 768px) {
+
+    /* All pages with 2rem 3rem padding */
+    .page-container,
+    [class*="page"] {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Tables — horizontal scroll */
+    .table-wrap,
+    [class*="tableWrap"] {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 500px;
+        font-size: 0.78rem;
+    }
+
+    /* Cards grid — single column */
+    [style*="minmax(300px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="minmax(240px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="minmax(180px"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Stat cards — 2 per row on mobile */
+    [style*="minmax(180px, 1fr)"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Hero section */
+    [style*="5rem 4rem"] {
+        padding: 2rem 1rem !important;
+    }
+
+    /* Coding editor split layout */
+    [style*="width: '40%'"] {
+        width: 100% !important;
+    }
+
+    /* Form grids */
+    [style*="minmax(200px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="minmax(220px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Action buttons row */
+    [style*="display: 'flex'"][style*="gap: '1rem'"] {
+        flex-wrap: wrap !important;
+    }
+
+    /* Attempt quiz navigation */
+    [style*="justifyContent: 'space-between'"][style*="flexWrap: 'wrap'"] {
+        gap: 0.5rem !important;
+    }
+}
+
+/* ── Small phones (< 480px) ── */
+@media (max-width: 480px) {
+    [style*="minmax(180px, 1fr)"] {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Score big number */
+    [style*="fontSize: '4rem'"] {
+        font-size: 2.5rem !important;
+    }
+
+    /* Hero illustration */
+    [style*="fontSize: '10rem'"] {
+        font-size: 5rem !important;
+    }
+
+    /* Tabs */
+    [style*="fontSize: '0.8rem'"] {
+        font-size: 0.72rem !important;
+    }
+}
+
+/* ── Coding Editor — mobile stack ── */
+@media (max-width: 900px) {
+
+    /* Split layout becomes vertical */
+    div[style*="display: 'flex'"][style*="overflow: 'hidden'"]>div[style*="width: '40%'"] {
+        width: 100% !important;
+        max-height: 50vh;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+    }
+
+    div[style*="display: 'flex'"][style*="overflow: 'hidden'"] {
+        flex-direction: column !important;
+    }
+}
+
+/* ── Landing page ── */
+@media (max-width: 768px) {
+
+    /* Hero illustration hide on very small */
+    [style*="fontSize: '10rem'"] {
+        display: none;
+    }
+
+    [style*="padding: '5rem 4rem'"] {
+        padding: 2.5rem 1rem !important;
+        min-height: auto !important;
+    }
+
+    [style*="padding: '5rem 4rem'"] h1 {
+        font-size: 1.8rem !important;
+    }
+}
+
+/* ── Login card ── */
+@media (max-width: 480px) {
+    [style*="maxWidth: 440"] {
+        padding: 1.5rem 1rem !important;
+    }
+
+    [style*="maxWidth: 420"] {
+        padding: 1.5rem 1rem !important;
+    }
+}
+
+/* ── Attempt Quiz ── */
+@media (max-width: 640px) {
+    [style*="padding: '2rem 3rem'"][style*="maxWidth: 800"] {
+        padding: 1rem !important;
+    }
+
+    /* Options full width */
+    [style*="gridTemplateColumns: '1fr 1fr'"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Dots smaller */
+    [style*="width: 12"][style*="height: 12"] {
+        width: 10px !important;
+        height: 10px !important;
+    }
+}
+
+/* ── Result page ── */
+@media (max-width: 640px) {
+    [style*="padding: '3rem'"][style*="textAlign: 'center'"] {
+        padding: 1.5rem 1rem !important;
+    }
+
+    [style*="fontSize: '4rem'"][style*="fontWeight: 800"] {
+        font-size: 2.8rem !important;
+    }
+}
+
+/* ── Timetable entry grid ── */
+@media (max-width: 640px) {
+    [style*="minmax(240px, 1fr)"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── Section results table ── */
+@media (max-width: 768px) {
+    [style*="overflowX: 'auto'"] {
+        overflow-x: auto !important;
+    }
+}

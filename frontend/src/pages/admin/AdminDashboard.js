@@ -147,7 +147,7 @@ const AdminDashboard = () => {
 };
 
 const styles = {
-    page: { padding: '2rem 3rem', maxWidth: 1200, margin: '0 auto' },
+    page: { padding: '1rem', maxWidth: 1200, margin: '0 auto' },
     title: { fontSize: '2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.3rem' },
     sub: { color: 'var(--text-muted)', marginBottom: '2.5rem' },
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' },

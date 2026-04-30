@@ -211,7 +211,7 @@ const AttemptQuiz = () => {
 };
 
 const styles = {
-    page: { padding: '2rem 3rem', maxWidth: 800, margin: '0 auto' },
+    page: { padding: '1rem', maxWidth: 800, margin: '0 auto' },
     schedCard: { background: 'var(--card)', borderRadius: '24px', padding: '3rem', textAlign: 'center', border: '1px solid var(--border)', maxWidth: 480, margin: '4rem auto' },
     countdownBox: { background: 'var(--bg)', borderRadius: '12px', padding: '1rem 2rem', fontSize: '1.2rem', marginBottom: '1.5rem', border: '1px solid var(--border)' },
     backBtn: { background: 'var(--primary)', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' },

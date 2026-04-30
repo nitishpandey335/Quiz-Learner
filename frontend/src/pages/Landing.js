@@ -50,23 +50,23 @@ const Landing = () => (
 );
 
 const styles = {
-    hero: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem', padding: '5rem 4rem', minHeight: '85vh', background: 'linear-gradient(135deg, #6366f110, #06b6d410)' },
-    heroContent: { flex: '1 1 400px', maxWidth: 600 },
+    hero: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem', padding: 'clamp(2rem, 5vw, 5rem) clamp(1rem, 4vw, 4rem)', minHeight: '85vh', background: 'linear-gradient(135deg, #6366f110, #06b6d410)' },
+    heroContent: { flex: '1 1 280px', maxWidth: 600 },
     heroBadge: { display: 'inline-block', background: 'var(--primary)', color: '#fff', padding: '0.3rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' },
     heroTitle: { fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: '1.2rem', color: 'var(--text)' },
     heroSub: { fontSize: '1.1rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '2rem' },
     heroBtns: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
     primaryBtn: { background: 'var(--primary)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 600, fontSize: '1rem', display: 'inline-block' },
     outlineBtn: { border: '2px solid var(--primary)', color: 'var(--primary)', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 600, fontSize: '1rem', display: 'inline-block' },
-    heroIllustration: { fontSize: '10rem', flex: '0 0 auto' },
-    section: { padding: '5rem 4rem', background: 'var(--bg)' },
-    sectionTitle: { fontSize: '2rem', fontWeight: 700, textAlign: 'center', marginBottom: '3rem', color: 'var(--text)' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' },
-    featureCard: { background: 'var(--card)', borderRadius: '20px', padding: '2rem', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', textAlign: 'center' },
+    heroIllustration: { fontSize: 'clamp(4rem, 15vw, 10rem)', flex: '0 0 auto' },
+    section: { padding: 'clamp(2rem, 5vw, 5rem) clamp(1rem, 4vw, 4rem)', background: 'var(--bg)' },
+    sectionTitle: { fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 700, textAlign: 'center', marginBottom: '2rem', color: 'var(--text)' },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem' },
+    featureCard: { background: 'var(--card)', borderRadius: '20px', padding: '1.5rem', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', textAlign: 'center' },
     featureIcon: { fontSize: '2.5rem', marginBottom: '1rem' },
     featureTitle: { fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text)' },
     featureDesc: { color: 'var(--text-muted)', lineHeight: 1.6, fontSize: '0.9rem' },
-    cta: { padding: '5rem 4rem', textAlign: 'center', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', color: '#fff' },
+    cta: { padding: 'clamp(2rem, 5vw, 5rem) clamp(1rem, 4vw, 4rem)', textAlign: 'center', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', color: '#fff' },
 };
 
 export default Landing;

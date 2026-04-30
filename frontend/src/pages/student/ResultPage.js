@@ -166,7 +166,7 @@ const ResultPage = () => {
 };
 
 const styles = {
-    page: { padding: '2rem 3rem', maxWidth: 800, margin: '0 auto' },
+    page: { padding: '1rem', maxWidth: 800, margin: '0 auto' },
     scoreCard: { background: 'var(--card)', borderRadius: '24px', padding: '3rem', textAlign: 'center', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', marginBottom: '2rem' },
     scoreTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)', margin: '0.5rem 0' },
     scoreBig: { fontSize: '4rem', fontWeight: 800, lineHeight: 1 },
