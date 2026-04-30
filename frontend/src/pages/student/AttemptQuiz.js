@@ -26,9 +26,9 @@ const AttemptQuiz = () => {
     useEffect(() => {
         getQuizById(id)
             .then(({ data }) => {
-                const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
-                setQuiz({ ...data, questions: shuffled });
-                setAnswers(new Array(shuffled.length).fill(-1));
+                // Don't shuffle — questions already in random order from teacher
+                setQuiz(data);
+                setAnswers(new Array(data.questions.length).fill(-1));
                 setTimeLeft(data.duration * 60);
                 if (data.attendanceEnabled) {
                     getMyAttendance(id).then(({ data: att }) => {
