@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { getQuizById, submitAttempt, markAttendance, getMyAttendance } from '../../utils/api';
 import Loader from '../../components/Loader';
+
+const MAX_TAB_SWITCHES = 3;
 
 const AttemptQuiz = () => {
     const { id } = useParams();
@@ -17,6 +19,13 @@ const AttemptQuiz = () => {
     const [submitting, setSubmitting] = useState(false);
     const [scheduledAt, setScheduledAt] = useState(null);
     const [countdown, setCountdown] = useState(null);
+
+    // Tab switch detection
+    const [tabSwitchCount, setTabSwitchCount] = useState(0);
+    const [showTabWarning, setShowTabWarning] = useState(false);
+    const [warningMsg, setWarningMsg] = useState('');
+    const tabSwitchRef = useRef(0);
+    const submittingRef = useRef(false);
 
     // Attendance
     const [showAttendance, setShowAttendance] = useState(false);
@@ -61,6 +70,35 @@ const AttemptQuiz = () => {
         return () => clearInterval(tick);
     }, [scheduledAt]);
 
+    // Tab switch / visibility detection
+    useEffect(() => {
+        if (!quiz) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden && !submittingRef.current) {
+                tabSwitchRef.current += 1;
+                setTabSwitchCount(tabSwitchRef.current);
+                const remaining = MAX_TAB_SWITCHES - tabSwitchRef.current;
+
+                if (tabSwitchRef.current >= MAX_TAB_SWITCHES) {
+                    setWarningMsg('⚠️ Maximum tab switches exceeded! Submitting your test automatically...');
+                    setShowTabWarning(true);
+                    setTimeout(() => {
+                        setShowTabWarning(false);
+                        handleSubmit();
+                    }, 2500);
+                } else {
+                    setWarningMsg(`⚠️ Tab switch detected! Warning ${tabSwitchRef.current}/${MAX_TAB_SWITCHES}. ${remaining} warning${remaining > 1 ? 's' : ''} left before auto-submit.`);
+                    setShowTabWarning(true);
+                    setTimeout(() => setShowTabWarning(false), 3500);
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [quiz]); // eslint-disable-line
+
     const handleMarkAttendance = async () => {
         setMarkingAttendance(true);
         try {
@@ -76,6 +114,7 @@ const AttemptQuiz = () => {
     const handleSubmit = useCallback(async () => {
         if (submitting) return;
         setSubmitting(true);
+        submittingRef.current = true;
         try {
             const timeTaken = Math.round((Date.now() - startTime) / 1000);
             const { data } = await submitAttempt({ quizId: id, answers, timeTaken });
@@ -130,6 +169,30 @@ const AttemptQuiz = () => {
 
     return (
         <div style={styles.page}>
+            {/* Tab Switch Warning Banner */}
+            <AnimatePresence>
+                {showTabWarning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -60 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -60 }}
+                        style={{
+                            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+                            background: tabSwitchCount >= MAX_TAB_SWITCHES ? '#ef4444' : '#f59e0b',
+                            color: '#fff', padding: '1rem 1.5rem',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            gap: '1rem', fontWeight: 700, fontSize: '1rem',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                        }}>
+                        <span style={{ fontSize: '1.5rem' }}>{tabSwitchCount >= MAX_TAB_SWITCHES ? '🚨' : '⚠️'}</span>
+                        <span>{warningMsg}</span>
+                        <span style={{ background: 'rgba(0,0,0,0.2)', padding: '0.2rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem' }}>
+                            {tabSwitchCount}/{MAX_TAB_SWITCHES}
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Attendance Modal */}
             <AnimatePresence>
                 {showAttendance && (
@@ -161,8 +224,15 @@ const AttemptQuiz = () => {
                         {attendanceMarked && <span style={styles.attBadge}>✅ Present</span>}
                     </p>
                 </div>
-                <div style={{ ...styles.timer, color: timeLeft < 60 ? '#ef4444' : 'var(--primary)' }}>
-                    ⏱ {mins}:{secs}
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {tabSwitchCount > 0 && (
+                        <div style={{ background: tabSwitchCount >= MAX_TAB_SWITCHES - 1 ? '#ef444420' : '#f59e0b20', color: tabSwitchCount >= MAX_TAB_SWITCHES - 1 ? '#ef4444' : '#f59e0b', padding: '0.4rem 0.8rem', borderRadius: '10px', fontSize: '0.78rem', fontWeight: 700, border: `1px solid ${tabSwitchCount >= MAX_TAB_SWITCHES - 1 ? '#ef4444' : '#f59e0b'}` }}>
+                            ⚠️ {tabSwitchCount}/{MAX_TAB_SWITCHES} switches
+                        </div>
+                    )}
+                    <div style={{ ...styles.timer, color: timeLeft < 60 ? '#ef4444' : 'var(--primary)' }}>
+                        ⏱ {mins}:{secs}
+                    </div>
                 </div>
             </div>
 
