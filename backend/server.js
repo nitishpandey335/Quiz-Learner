@@ -8,7 +8,14 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({
+    origin: [
+        'http://localhost:3000',
+        'https://quiz-learner-beta.vercel.app',
+        process.env.FRONTEND_URL,
+    ].filter(Boolean),
+    credentials: true,
+}));
 app.use(express.json());
 app.use('/uploads', require('express').static('uploads'));
 
